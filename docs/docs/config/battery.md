@@ -68,3 +68,15 @@ Applies to: `compatible = "zmk,battery-nrf-vddh"`
 Definition file: [zmk/app/module/dts/bindings/sensor/zmk,battery-nrf-vddh.yaml](https://github.com/zmkfirmware/zmk/blob/main/app/module/dts/bindings/sensor/zmk%2Cbattery-nrf-vddh.yaml)
 
 This driver has no configuration.
+
+## nRF VDD Battery Sensor
+
+Driver for reading the voltage of a battery using a Nordic nRF52's VDD pin.
+
+### Devicetree
+
+Applies to: `compatible = "zmk,battery-nrf-vdd"`
+
+Definition file: [zmk/app/module/dts/bindings/sensor/zmk,battery-nrf-vdd.yaml](https://github.com/zmkfirmware/zmk/blob/main/app/module/dts/bindings/sensor/zmk%2Cbattery-nrf-vdd.yaml)
+
+This driver has no configuration.

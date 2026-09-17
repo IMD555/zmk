@@ -1,0 +1,12 @@
+# Copyright (c) 2024 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if BOARD_BL652
+
+config ZMK_KEYBOARD_NAME
+    default "bl652"
+
+config BT_CTLR
+    default BT
+
+endif # BOARD_BL652

@@ -19,6 +19,7 @@ To enable a battery sensor on a new board, add the driver for the sensor to your
 
 - `zmk,battery-voltage-divider`: Reads the voltage on an analog input pin.
 - `zmk,battery-nrf-vddh`: Reads the power supply voltage on a Nordic nRF52's VDDH pin.
+- `zmk,battery-nrf-vdd`: Reads the power supply voltage on a Nordic nRF52's VDD pin.
 
 See the [battery level configuration page](../config/battery.md) for the configuration supported by each driver provided by ZMK.
 

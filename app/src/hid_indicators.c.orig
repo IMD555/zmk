@@ -23,10 +23,6 @@ static const struct gpio_dt_spec capslock_led =
     GPIO_DT_SPEC_GET(DT_CHOSEN(zmk_capslock_led), gpios);
 #endif // DT_HAS_CHOSEN(zmk_capslock_led)
 
-#if DT_HAS_CHOSEN(zmk_numlock_led)
-static const struct gpio_dt_spec numlock_led = GPIO_DT_SPEC_GET(DT_CHOSEN(zmk_numlock_led), gpios);
-#endif // DT_HAS_CHOSEN(zmk_numlock_led)
-
 static zmk_hid_indicators_t hid_indicators[ZMK_ENDPOINT_COUNT];
 
 zmk_hid_indicators_t zmk_hid_indicators_get_current_profile(void) {
@@ -47,11 +43,6 @@ static void raise_led_changed_event(struct k_work *_work) {
     gpio_pin_configure_dt(&capslock_led, GPIO_OUTPUT);
     gpio_pin_set_dt(&capslock_led, !!(indicators & HID_USAGE_LED_CAPS_LOCK));
 #endif // DT_HAS_CHOSEN(zmk_capslock_led)
-
-#if DT_HAS_CHOSEN(zmk_numlock_led)
-    gpio_pin_configure_dt(&numlock_led, GPIO_OUTPUT);
-    gpio_pin_set_dt(&numlock_led, !(indicators & HID_USAGE_LED_NUM_LOCK));
-#endif // DT_HAS_CHOSEN(zmk_numlock_led)
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_HID_INDICATORS) && IS_ENABLED(CONFIG_ZMK_SPLIT_BLE)
     zmk_split_bt_update_hid_indicator(indicators);

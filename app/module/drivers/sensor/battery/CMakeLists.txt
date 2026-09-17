@@ -7,4 +7,5 @@ zephyr_library()
 
 zephyr_library_sources(battery_common.c)
 zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_NRF_VDDH battery_nrf_vddh.c)
+zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_NRF_VDD battery_nrf_vdd.c)
 zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_VOLTAGE_DIVIDER battery_voltage_divider.c)

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 DT_COMPAT_ZMK_BATTERY_NRF_VDDH := zmk,battery-nrf-vddh
+DT_COMPAT_ZMK_BATTERY_NRF_VDD := zmk,battery-nrf-vdd
 DT_COMPAT_ZMK_BATTERY_VOLTAGE_DIVIDER := zmk,battery-voltage-divider
 
 config ZMK_BATTERY
@@ -17,6 +18,15 @@ config ZMK_BATTERY_NRF_VDDH
     depends on SENSOR
     help
         Enable ZMK nRF VDDH voltage driver for battery monitoring.
+
+config ZMK_BATTERY_NRF_VDD
+    bool
+    default $(dt_compat_enabled,$(DT_COMPAT_ZMK_BATTERY_NRF_VDD))
+    select ADC
+    select ZMK_BATTERY
+    depends on SENSOR
+    help
+        Enable ZMK nRF VDD voltage driver for battery monitoring.
 
 config ZMK_BATTERY_VOLTAGE_DIVIDER
     bool

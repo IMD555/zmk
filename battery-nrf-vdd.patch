@@ -1,0 +1,265 @@
+diff --git a/app/module/drivers/sensor/battery/CMakeLists.txt b/app/module/drivers/sensor/battery/CMakeLists.txt
+index 1203e53a..c9ff923a 100644
+--- a/app/module/drivers/sensor/battery/CMakeLists.txt
++++ b/app/module/drivers/sensor/battery/CMakeLists.txt
+@@ -7,4 +7,5 @@ zephyr_library()
+ 
+ zephyr_library_sources(battery_common.c)
+ zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_NRF_VDDH battery_nrf_vddh.c)
++zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_NRF_VDD battery_nrf_vdd.c)
+ zephyr_library_sources_ifdef(CONFIG_ZMK_BATTERY_VOLTAGE_DIVIDER battery_voltage_divider.c)
+\ No newline at end of file
+diff --git a/app/module/drivers/sensor/battery/Kconfig b/app/module/drivers/sensor/battery/Kconfig
+index 703adebd..75c80b47 100644
+--- a/app/module/drivers/sensor/battery/Kconfig
++++ b/app/module/drivers/sensor/battery/Kconfig
+@@ -2,6 +2,7 @@
+ # SPDX-License-Identifier: MIT
+ 
+ DT_COMPAT_ZMK_BATTERY_NRF_VDDH := zmk,battery-nrf-vddh
++DT_COMPAT_ZMK_BATTERY_NRF_VDD := zmk,battery-nrf-vdd
+ DT_COMPAT_ZMK_BATTERY_VOLTAGE_DIVIDER := zmk,battery-voltage-divider
+ 
+ config ZMK_BATTERY
+@@ -18,6 +19,15 @@ config ZMK_BATTERY_NRF_VDDH
+     help
+         Enable ZMK nRF VDDH voltage driver for battery monitoring.
+ 
++config ZMK_BATTERY_NRF_VDD
++    bool
++    default $(dt_compat_enabled,$(DT_COMPAT_ZMK_BATTERY_NRF_VDD))
++    select ADC
++    select ZMK_BATTERY
++    depends on SENSOR
++    help
++        Enable ZMK nRF VDD voltage driver for battery monitoring.
++
+ config ZMK_BATTERY_VOLTAGE_DIVIDER
+     bool
+     default $(dt_compat_enabled,$(DT_COMPAT_ZMK_BATTERY_VOLTAGE_DIVIDER))
+diff --git a/app/module/drivers/sensor/battery/battery_common.c b/app/module/drivers/sensor/battery/battery_common.c
+index 9afe2d5b..bd453461 100644
+--- a/app/module/drivers/sensor/battery/battery_common.c
++++ b/app/module/drivers/sensor/battery/battery_common.c
+@@ -29,7 +29,7 @@ int battery_channel_get(const struct battery_value *value, enum sensor_channel c
+     return 0;
+ }
+ 
+-uint8_t lithium_ion_mv_to_pct(int16_t bat_mv) {
++uint8_t lithium_ion_mv_to_pct(uint16_t bat_mv) {
+     // Simple linear approximation of a battery based off adafruit's discharge graph:
+     // https://learn.adafruit.com/li-ion-and-lipoly-batteries/voltages
+ 
+@@ -40,4 +40,21 @@ uint8_t lithium_ion_mv_to_pct(int16_t bat_mv) {
+     }
+ 
+     return bat_mv * 2 / 15 - 459;
++}
++
++uint8_t nimh_x2_mv_to_pct(uint16_t bat_mv) {
++    // For 2 series NiMH batteries
++    // Can also be used with the following battery types with a cut-off voltage of 2V
++    // - 2x Alkaline 1.5V(LR)
++    // - 2x Lithium 1.5V(FR)
++    // - Lithium 3V(CR,BR)
++    // - LiFePO4
++
++    if (bat_mv >= 2800) {
++        return 100;
++    } else if (bat_mv <= 2050) {
++        return 0;
++    }
++
++    return bat_mv * 17 / 128 - 272;
+ }
+\ No newline at end of file
+diff --git a/app/module/drivers/sensor/battery/battery_common.h b/app/module/drivers/sensor/battery/battery_common.h
+index 3e16ceed..b04a4f40 100644
+--- a/app/module/drivers/sensor/battery/battery_common.h
++++ b/app/module/drivers/sensor/battery/battery_common.h
+@@ -18,4 +18,5 @@ struct battery_value {
+ int battery_channel_get(const struct battery_value *value, enum sensor_channel chan,
+                         struct sensor_value *val_out);
+ 
+-uint8_t lithium_ion_mv_to_pct(int16_t bat_mv);
++uint8_t lithium_ion_mv_to_pct(uint16_t bat_mv);
++uint8_t nimh_x2_mv_to_pct(uint16_t bat_mv);
+diff --git a/app/module/drivers/sensor/battery/battery_nrf_vdd.c b/app/module/drivers/sensor/battery/battery_nrf_vdd.c
+new file mode 100644
+index 00000000..465310da
+--- /dev/null
++++ b/app/module/drivers/sensor/battery/battery_nrf_vdd.c
+@@ -0,0 +1,116 @@
++/*
++ * Copyright (c) 2021 The ZMK Contributors
++ *
++ * SPDX-License-Identifier: MIT
++ *
++ * This is a simplified version of battery_voltage_divider.c which always reads
++ * the VDD channel of the &adc node with 1/6 gain.
++ */
++
++// https://en.wikipedia.org/wiki/Comparison_of_commercial_battery_types
++
++#define DT_DRV_COMPAT zmk_battery_nrf_vdd
++
++#include <zephyr/device.h>
++#include <zephyr/devicetree.h>
++#include <zephyr/drivers/adc.h>
++#include <zephyr/drivers/sensor.h>
++#include <zephyr/logging/log.h>
++
++#include "battery_common.h"
++
++LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
++
++static const struct device *adc = DEVICE_DT_GET(DT_NODELABEL(adc));
++
++struct vdd_data {
++    struct adc_channel_cfg acc;
++    struct adc_sequence as;
++    struct battery_value value;
++};
++
++static int vdd_sample_fetch(const struct device *dev, enum sensor_channel chan) {
++    // Make sure selected channel is supported
++    if (chan != SENSOR_CHAN_GAUGE_VOLTAGE && chan != SENSOR_CHAN_GAUGE_STATE_OF_CHARGE &&
++        chan != SENSOR_CHAN_ALL) {
++        LOG_DBG("Selected channel is not supported: %d.", chan);
++        return -ENOTSUP;
++    }
++
++    struct vdd_data *drv_data = dev->data;
++    struct adc_sequence *as = &drv_data->as;
++
++    int rc = adc_read(adc, as);
++    as->calibrate = false;
++
++    if (rc != 0) {
++        LOG_ERR("Failed to read ADC: %d", rc);
++        return rc;
++    }
++
++    uint32_t val = drv_data->value.adc_raw;
++    rc = adc_raw_to_millivolts(adc_ref_internal(adc), drv_data->acc.gain, as->resolution, &val);
++    if (rc != 0) {
++        LOG_ERR("Failed to convert raw ADC to mV: %d", rc);
++        return rc;
++    }
++
++    drv_data->value.millivolts = val;
++    drv_data->value.state_of_charge = nimh_x2_mv_to_pct(drv_data->value.millivolts);
++
++    LOG_DBG("ADC raw %d ~ %d mV => %d%%", drv_data->value.adc_raw, drv_data->value.millivolts,
++            drv_data->value.state_of_charge);
++
++    return rc;
++}
++
++static int vdd_channel_get(const struct device *dev, enum sensor_channel chan,
++                           struct sensor_value *val) {
++    struct vdd_data const *drv_data = dev->data;
++    return battery_channel_get(&drv_data->value, chan, val);
++}
++
++static const struct sensor_driver_api vdd_api = {
++    .sample_fetch = vdd_sample_fetch,
++    .channel_get = vdd_channel_get,
++};
++
++static int vdd_init(const struct device *dev) {
++    struct vdd_data *drv_data = dev->data;
++
++    if (!device_is_ready(adc)) {
++        LOG_ERR("ADC device is not ready %s", adc->name);
++        return -ENODEV;
++    }
++
++    drv_data->as = (struct adc_sequence){
++        .channels = BIT(0),
++        .buffer = &drv_data->value.adc_raw,
++        .buffer_size = sizeof(drv_data->value.adc_raw),
++        .oversampling = 4,
++        .calibrate = true,
++    };
++
++#ifdef CONFIG_ADC_NRFX_SAADC
++    drv_data->acc = (struct adc_channel_cfg){
++        .gain = ADC_GAIN_1_6,
++        .reference = ADC_REF_INTERNAL,
++        .acquisition_time = ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 40),
++        .input_positive = SAADC_CH_PSELN_PSELN_VDD,
++    };
++
++    drv_data->as.resolution = 12;
++#else
++#error Unsupported ADC
++#endif
++
++    const int rc = adc_channel_setup(adc, &drv_data->acc);
++    LOG_DBG("VDD setup returned %d", rc);
++
++    return rc;
++}
++
++static struct vdd_data vdd_data;
++
++DEVICE_DT_INST_DEFINE(0, &vdd_init, NULL, &vdd_data, NULL, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,
++                      &vdd_api);
+diff --git a/app/module/drivers/sensor/battery/battery_nrf_vddh.c b/app/module/drivers/sensor/battery/battery_nrf_vddh.c
+index 32c7c61e..e6ca4c7c 100644
+--- a/app/module/drivers/sensor/battery/battery_nrf_vddh.c
++++ b/app/module/drivers/sensor/battery/battery_nrf_vddh.c
+@@ -48,7 +48,7 @@ static int vddh_sample_fetch(const struct device *dev, enum sensor_channel chan)
+         return rc;
+     }
+ 
+-    int32_t val = drv_data->value.adc_raw;
++    uint32_t val = drv_data->value.adc_raw;
+     rc = adc_raw_to_millivolts(adc_ref_internal(adc), drv_data->acc.gain, as->resolution, &val);
+     if (rc != 0) {
+         LOG_ERR("Failed to convert raw ADC to mV: %d", rc);
+diff --git a/app/module/dts/bindings/sensor/zmk,battery-nrf-vdd.yaml b/app/module/dts/bindings/sensor/zmk,battery-nrf-vdd.yaml
+new file mode 100644
+index 00000000..69439f8a
+--- /dev/null
++++ b/app/module/dts/bindings/sensor/zmk,battery-nrf-vdd.yaml
+@@ -0,0 +1,6 @@
++# Copyright (c) 2021 The ZMK Contributors
++# SPDX-License-Identifier: MIT
++
++description: Battery SoC monitoring using nRF VDD
++
++compatible: "zmk,battery-nrf-vdd"
+diff --git a/docs/docs/config/battery.md b/docs/docs/config/battery.md
+index 463dc087..8469a7fa 100644
+--- a/docs/docs/config/battery.md
++++ b/docs/docs/config/battery.md
+@@ -68,3 +68,15 @@ Applies to: `compatible = "zmk,battery-nrf-vddh"`
+ Definition file: [zmk/app/module/dts/bindings/sensor/zmk,battery-nrf-vddh.yaml](https://github.com/zmkfirmware/zmk/blob/main/app/module/dts/bindings/sensor/zmk%2Cbattery-nrf-vddh.yaml)
+ 
+ This driver has no configuration.
++
++## nRF VDD Battery Sensor
++
++Driver for reading the voltage of a battery using a Nordic nRF52's VDD pin.
++
++### Devicetree
++
++Applies to: `compatible = "zmk,battery-nrf-vdd"`
++
++Definition file: [zmk/app/module/dts/bindings/sensor/zmk,battery-nrf-vdd.yaml](https://github.com/zmkfirmware/zmk/blob/main/app/module/dts/bindings/sensor/zmk%2Cbattery-nrf-vdd.yaml)
++
++This driver has no configuration.
+diff --git a/docs/docs/features/battery.md b/docs/docs/features/battery.md
+index 29142eed..afd3b29e 100644
+--- a/docs/docs/features/battery.md
++++ b/docs/docs/features/battery.md
+@@ -19,6 +19,7 @@ To enable a battery sensor on a new board, add the driver for the sensor to your
+ 
+ - `zmk,battery-voltage-divider`: Reads the voltage on an analog input pin.
+ - `zmk,battery-nrf-vddh`: Reads the power supply voltage on a Nordic nRF52's VDDH pin.
++- `zmk,battery-nrf-vdd`: Reads the power supply voltage on a Nordic nRF52's VDD pin.
+ 
+ See the [battery level configuration page](../config/battery.md) for the configuration supported by each driver provided by ZMK.
+ 

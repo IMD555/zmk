@@ -18,4 +18,5 @@ struct battery_value {
 int battery_channel_get(const struct battery_value *value, enum sensor_channel chan,
                         struct sensor_value *val_out);
 
-uint8_t lithium_ion_mv_to_pct(int16_t bat_mv);
+uint8_t lithium_ion_mv_to_pct(uint16_t bat_mv);
+uint8_t nimh_x2_mv_to_pct(uint16_t bat_mv);

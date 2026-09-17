@@ -1,0 +1,8 @@
+file_format: "1"
+id: minila_ble
+name: MINILA BLE
+type: shield
+url: https://dummy/
+requires: [bl652]
+features:
+  - keys

@@ -1,0 +1,13 @@
+identifier: thin_minila
+name: THIN_MINILA
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - adc
+  - ble
+  - ieee802154
+  - pwm
+  - watchdog

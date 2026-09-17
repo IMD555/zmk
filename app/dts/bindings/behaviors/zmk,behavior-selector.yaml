@@ -1,0 +1,23 @@
+# Copyright (c) 2024 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: Selector Behavior
+
+compatible: "zmk,behavior-selector"
+
+include: one_param.yaml
+
+properties:
+  bindings:
+    type: phandle-array
+    required: true
+  tap_ms:
+    type: int
+    default: 5
+  selection-default:
+    type: int
+    default: 0
+  loop:
+    type: boolean
+  separate-pushed:
+    type: boolean

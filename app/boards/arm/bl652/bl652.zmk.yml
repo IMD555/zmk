@@ -1,0 +1,13 @@
+file_format: "1"
+id: bl652
+name: Ezurio BL652
+type: board
+arch: arm
+features:
+  - keys
+  - encoder
+  - underglow
+  - backlight
+outputs:
+  - ble
+url: https://www.ezurio.com/wireless-modules/bluetooth-modules/bluetooth-5-modules/bl652-series-bluetooth-v5-nfc-module

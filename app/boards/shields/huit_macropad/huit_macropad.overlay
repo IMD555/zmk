@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2022 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+    
+        zmk,capslock-led = &led_left;
+        zmk,numlock-led = &led_right;
+    };
+
+
+    kscan0: kscan_0 {
+        compatible = "zmk,kscan-gpio-matrix";
+        wakeup-source;
+        diode-direction = "col2row";
+
+        col-gpios
+            = <&xiao_d 7 GPIO_ACTIVE_HIGH>
+            , <&xiao_d 8 GPIO_ACTIVE_HIGH>
+            , <&xiao_d 9 GPIO_ACTIVE_HIGH>
+            , <&xiao_d 10 GPIO_ACTIVE_HIGH>
+            ;
+
+        row-gpios
+            = <&xiao_d 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&xiao_d 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&xiao_d 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&xiao_d 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&xiao_d 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+    };
+
+    leds {
+        status = "okay";
+        compatible = "gpio-leds";
+        led_right: led_right {
+            gpios = <&xiao_d 0 GPIO_ACTIVE_HIGH>;
+            label = "Right LED";
+        };
+        led_left: led_left {
+            gpios = <&xiao_d 1 GPIO_ACTIVE_HIGH>;
+            label = "Left LED";
+        };
+    };
+};
+
+&xiao_spi { status = "disabled"; };
+&xiao_serial { status = "disabled"; };

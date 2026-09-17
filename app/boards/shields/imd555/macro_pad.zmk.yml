@@ -1,0 +1,9 @@
+file_format: "1"
+id: macro_pad
+name: MACRO PAD
+type: shield
+url: https://dummy/
+requires: [bl652]
+features:
+  - keys
+  - encoder

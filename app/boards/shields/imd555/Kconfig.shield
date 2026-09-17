@@ -1,0 +1,15 @@
+# Copyright (c) 2024 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+config SHIELD_MINILA_BLE
+    def_bool $(shields_list_contains,minila_ble)
+
+config SHIELD_THIN_MINILA
+    def_bool $(shields_list_contains,thin_minila)
+    
+config SHIELD_MACRO_PAD
+    def_bool $(shields_list_contains,macro_pad)
+    
+config SHIELD_MACRO_PAD2_3D
+    def_bool $(shields_list_contains,macro_pad2_3d)
+    

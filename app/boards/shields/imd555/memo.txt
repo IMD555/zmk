@@ -1,0 +1,13 @@
+// WSL2
+source ~/zmk/.venv/bin/activate
+cd zmk/zmk/app/
+west build -p -b bl652 -- -DSHIELD=thin_minila
+west build -p -b bl652 -- -DSHIELD=minila_ble
+west build -p -b bl652 -- -DSHIELD=macro_pad
+west build -p -b bl652 -- -DSHIELD=macro_pad2_3d
+
+// PowerShell
+nrfjprog.exe -f nrf52 --program \\wsl.localhost\Debian\home\user\zmk\zmk\app\build\zephyr\zmk.hex --sectorerase --verify --reset
+
+// WSL2 & RaspberryPi Debug Probe
+openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg -c "transport select swd" -c "init" -c "program zmk.hex verify reset exit"

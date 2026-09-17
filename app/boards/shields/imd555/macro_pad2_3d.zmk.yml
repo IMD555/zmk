@@ -1,0 +1,8 @@
+file_format: "1"
+id: macro_pad2_3d
+name: MACRO PAD2 3D
+type: shield
+url: https://dummy/
+requires: [bl652]
+features:
+  - keys

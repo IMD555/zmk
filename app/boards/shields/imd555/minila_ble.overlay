@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2024 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,matrix-transform = &default_transform;
+        // zmk,capslock-led = &led1;
+        // zmk,advertising-led = &led0;
+        // zmk,connected-led = &led0;
+    };
+
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <8>;
+        rows = <16>;
+        map = <
+        RC(1,3) RC(1,7) RC(2,7) RC(3,7) RC(4,7) RC(4,6) RC(5,6) RC(5,7) RC(6,7) RC(7,7) RC(8,7) RC(8,6) RC(6,6) RC(1,6) RC(10,1)
+        RC(1,1) RC(1,0) RC(2,0) RC(3,0) RC(4,0) RC(4,1) RC(5,1) RC(5,0) RC(6,0) RC(7,0) RC(8,0) RC(8,1) RC(6,1) RC(10,2)
+        RC(2,1) RC(1,2) RC(2,2) RC(3,2) RC(4,2) RC(4,3) RC(5,3) RC(5,2) RC(6,2) RC(7,2) RC(8,2) RC(8,3) RC(10,4)
+        RC(15,1) RC(1,4) RC(2,4) RC(3,4) RC(4,4) RC(4,5) RC(5,5) RC(5,4) RC(6,4) RC(7,4) RC(8,5) RC(15,2) RC(14,3) RC(10,6)
+        RC(0,6) RC(13,1) RC(9,3) RC(9,2) RC(11,3) RC(9,0) RC(9,5) RC(13,5) RC(14,5) RC(11,5) RC(12,5)
+        >;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+
+        diode-direction = "col2row";
+        row-gpios
+            = <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 16 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 12 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 19 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 25 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 17 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+        col-gpios
+            = <&gpio0 18 GPIO_ACTIVE_HIGH>
+            , <&gpio0 14 GPIO_ACTIVE_HIGH>
+            , <&gpio0 11 GPIO_ACTIVE_HIGH>
+            , <&gpio0 9 GPIO_ACTIVE_HIGH>
+            , <&gpio0 7 GPIO_ACTIVE_HIGH>
+            , <&gpio0 5 GPIO_ACTIVE_HIGH>
+            , <&gpio0 3 GPIO_ACTIVE_HIGH>
+            , <&gpio0 13 GPIO_ACTIVE_HIGH>
+            ;
+    };
+
+    leds {
+        status = "okay";
+        compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 26 GPIO_ACTIVE_LOW>;
+			label = "Right LED";
+		};
+		led1: led_1 {
+			gpios = <&gpio0 30 GPIO_ACTIVE_LOW>;
+			label = "Left LED";
+		};
+    };
+    
+	aliases {
+		indicator-led = &led0;
+    };
+};

@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2022 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+
+#define DEFAULT 0
+
+/ {
+    behaviors {
+        td_plus_minus: td_plus_minus {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <250>;
+            bindings = <&kp KP_PLUS>, <&kp KP_MINUS>;
+        };
+
+        td_multiply_divide: td_multiply_divide {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <250>;
+            bindings = <&kp KP_MULTIPLY>, <&kp KP_DIVIDE>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            bindings = <
+            &kp KP_NUM &kp RC(RS(F1)) &kp RC(RS(F2)) &kp RC(RS(F3))
+            &kp KP_N7 &kp KP_N8 &kp KP_N9 &td_plus_minus
+            &kp KP_N4 &kp KP_N5 &kp KP_N6 &td_multiply_divide
+            &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp LS(MINUS)
+            &kp TAB &kp KP_N0 &kp KP_DOT &kp ENTER
+            >;
+        };
+    };
+};

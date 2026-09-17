@@ -1,0 +1,8 @@
+file_format: "1"
+id: huit_macropad
+name: huit_macropad
+type: shield
+url: https://dummy
+requires: [seeed_xiao]
+features:
+  - keys

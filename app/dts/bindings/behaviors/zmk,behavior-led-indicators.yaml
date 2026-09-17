@@ -1,0 +1,8 @@
+# Copyright (c) 2024 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: LED indicators Behavior
+
+compatible: "zmk,behavior-led-indicators"
+
+include: two_param.yaml

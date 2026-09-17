@@ -1,0 +1,8 @@
+file_format: "1"
+id: thin_minila
+name: THIN MINILA
+type: shield
+url: https://dummy/
+requires: [bl652]
+features:
+  - keys

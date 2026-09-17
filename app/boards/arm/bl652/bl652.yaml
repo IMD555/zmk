@@ -1,0 +1,13 @@
+identifier: bl652
+name: BL652
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - adc
+  - ble
+  - ieee802154
+  - pwm
+  - watchdog

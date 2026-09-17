@@ -29,7 +29,7 @@ int battery_channel_get(const struct battery_value *value, enum sensor_channel c
     return 0;
 }
 
-uint8_t lithium_ion_mv_to_pct(int16_t bat_mv) {
+uint8_t lithium_ion_mv_to_pct(uint16_t bat_mv) {
     // Simple linear approximation of a battery based off adafruit's discharge graph:
     // https://learn.adafruit.com/li-ion-and-lipoly-batteries/voltages
 
@@ -40,4 +40,21 @@ uint8_t lithium_ion_mv_to_pct(int16_t bat_mv) {
     }
 
     return bat_mv * 2 / 15 - 459;
+}
+
+uint8_t nimh_x2_mv_to_pct(uint16_t bat_mv) {
+    // For 2 series NiMH batteries
+    // Can also be used with the following battery types with a cut-off voltage of 2V
+    // - 2x Alkaline 1.5V(LR)
+    // - 2x Lithium 1.5V(FR)
+    // - Lithium 3V(CR,BR)
+    // - LiFePO4
+
+    if (bat_mv >= 2800) {
+        return 100;
+    } else if (bat_mv <= 2050) {
+        return 0;
+    }
+
+    return bat_mv * 17 / 128 - 272;
 }
